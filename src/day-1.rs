@@ -1,123 +1,60 @@
 use std::fs;
 
+fn try_parse(line: &[u8], iter: usize, return_val: char, spelled_out: &'static [u8]) -> Option<char> {
+    let needed_additional_len = spelled_out.len() - 1;
+    if iter + needed_additional_len >= line.len() {
+        return None;
+    }
+
+    let mut iter = iter + 1;
+    let mut i = 1;
+    let mut matched = true;
+    while i < spelled_out.len() {
+        if spelled_out[i] != line[iter] {
+            matched = false;
+            break;
+        }
+
+        i += 1;
+        iter += 1;
+    }
+
+    if matched {
+        return Some(return_val);
+    }
+
+    None
+}
+
 /// returns an options of pair of the spelled out number and the moved iter
-fn check_for_spelled_out_num(line: &[u8], iter: usize) -> Option<(char, usize)> {
+fn check_for_spelled_out_num(line: &[u8], iter: usize) -> Option<char> {
     let char = line[iter] as char;
 
     match char {
-        'o' => {
-            // one
-            if iter + 2 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'n' as u8 && line[iter + 2] == 'e' as u8 {
-                return Some(('1', iter + 2));
-            }
-
-            None
-        },
-        't' => {
-            // two, three
-
-            // two
-            if iter + 2 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'w' as u8 && line[iter + 2] == 'o' as u8 {
-                return Some(('2', iter + 2));
-            }
-
-            // three
-            if iter + 4 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'h' as u8 && line[iter + 2] == 'r' as u8 &&
-                line[iter + 3] == 'e' as u8 && line[iter + 4] == 'e' as u8 {
-
-                return Some(('3', iter + 4));
-            }
-
-            None
-        },
-        'f' => {
-            // four, five
-
-            if iter + 3 >= line.len() {
-                return None;
-            }
-
-            // four
-            if line[iter + 1] == 'o' as u8 && line[iter + 2] == 'u' as u8 &&
-                line[iter + 3] == 'r' as u8 {
-
-                return Some(('4', iter + 3));
-            }
-
-            // five
-            if line[iter + 1] == 'i' as u8 && line[iter + 2] == 'v' as u8 &&
-                line[iter + 3] == 'e' as u8 {
-
-                return Some(('5', iter + 3));
-            }
-
-            None
-        },
-        's' => {
-            // six, seven
-
-            // six
-            if iter + 2 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'i' as u8 && line[iter + 2] == 'x' as u8 {
-                return Some(('6', iter + 2));
-            }
-
-            // seven
-            if iter + 4 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'e' as u8 && line[iter + 2] == 'v' as u8
-                && line[iter + 3] == 'e' as u8 && line[iter + 4] == 'n' as u8 {
-
-                return Some(('7', iter + 4))
-            }
-
-            None
-        },
-        'e' => {
-            // eight
-            if iter + 4 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'i' as u8 && line[iter + 2] == 'g' as u8
-                && line[iter + 3] == 'h' as u8 && line[iter + 4] == 't' as u8 {
-
-                return Some(('8', iter + 4));
-            }
-
-            None
-        },
-        'n' => {
-            // nine
-            if iter + 3 >= line.len() {
-                return None;
-            }
-
-            if line[iter + 1] == 'i' as u8 && line[iter + 2] == 'n' as u8
-                && line[iter + 3] == 'e' as u8 {
-
-                return Some(('9', iter + 3));
-            }
-
-            None
-        },
+        // one
+        'o' => try_parse(line, iter, '1', "one".as_bytes()),
+        // two, three
+        't' => if let Some(r) = try_parse(line, iter, '2', "two".as_bytes()) {
+            Some(r)
+        } else {
+            try_parse(line, iter, '3', "three".as_bytes())
+        }
+        // four, five
+        'f' => if let Some(r) = try_parse(line, iter, '4', "four".as_bytes()) {
+            Some(r)
+        } else {
+            try_parse(line, iter, '5', "five".as_bytes())
+        }
+        // six, seven
+        's' => if let Some(r) = try_parse(line, iter, '6', "six".as_bytes()) {
+            Some(r)
+        } else {
+            try_parse(line, iter, '7', "seven".as_bytes())
+        }
+        // eight
+        'e' => try_parse(line, iter, '8', "eight".as_bytes()),
+        // nine
+        'n' => try_parse(line, iter, '9', "nine".as_bytes()),
         _ => None
     }
 }
@@ -140,7 +77,7 @@ fn solve(input: &String) {
                 break;
             }
 
-            if let Some((n, _)) = check_for_spelled_out_num(line, beg_iter) {
+            if let Some(n) = check_for_spelled_out_num(line, beg_iter) {
                 missing_number.push(n);
                 break;
             }
@@ -157,7 +94,7 @@ fn solve(input: &String) {
                 break;
             }
 
-            if let Some((n, _)) = check_for_spelled_out_num(line, end_iter as usize) {
+            if let Some(n) = check_for_spelled_out_num(line, end_iter as usize) {
                 missing_number.push(n);
                 break;
             }
@@ -172,6 +109,6 @@ fn solve(input: &String) {
 }
 
 fn main() {
-    let input = fs::read_to_string("../inputs/day1.txt").expect("unable to read file");
+    let input = fs::read_to_string("inputs/day1.txt").expect("unable to read file");
     solve(&input);
 }
